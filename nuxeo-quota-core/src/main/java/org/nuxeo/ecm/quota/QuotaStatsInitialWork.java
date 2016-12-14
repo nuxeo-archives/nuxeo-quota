@@ -35,11 +35,13 @@ public class QuotaStatsInitialWork extends AbstractWork {
     public static final String CATEGORY_QUOTA_INITIAL = "quotaInitialStatistics";
 
     private final String updaterName;
+    private final String path;
 
-    public QuotaStatsInitialWork(String updaterName, String repositoryName) {
+    public QuotaStatsInitialWork(String updaterName, String repositoryName, String path) {
         super(repositoryName + ":quotaInitialStatistics:" + updaterName);
         setDocument(repositoryName, null);
         this.updaterName = updaterName;
+        this.path = path;
     }
 
     @Override
@@ -67,7 +69,11 @@ public class QuotaStatsInitialWork extends AbstractWork {
             @Override
             public void run() {
                 QuotaStatsService service = Framework.getLocalService(QuotaStatsService.class);
-                service.computeInitialStatistics(updaterName, session, currentWorker);
+	            if (path != null) {
+                    service.computeInitialStatistics(updaterName, session, currentWorker, path);
+                } else {
+                    service.computeInitialStatistics(updaterName, session, currentWorker);
+                }
             }
         }.runUnrestricted();
     }

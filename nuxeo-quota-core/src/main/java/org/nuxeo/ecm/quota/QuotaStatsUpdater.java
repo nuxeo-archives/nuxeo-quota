@@ -46,6 +46,15 @@ public interface QuotaStatsUpdater {
      * @param session an unrestricted {@link CoreSession} to be used
      */
     void computeInitialStatistics(CoreSession session, final QuotaStatsInitialWork currentWorker);
+    
+    /**
+     * Compute the initial statistics based on the path for this
+     * {@code QuotaStatsUpdater}.
+     * 
+     * @param session an unrestricted {@link CoreSession} to be used
+     * @param path for computing initial statistics
+     */
+    void computeInitialStatistics(CoreSession session, final QuotaStatsInitialWork currentWorker, String path);
 
     public void setName(String name);
 
