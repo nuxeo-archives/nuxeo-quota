@@ -50,6 +50,19 @@ public interface QuotaStatsService {
      * Launch an asynchronously initial computation for the given {@code updaterName} on {@code repositoryName}.
      */
     void launchInitialStatisticsComputation(String updaterName, String repositoryName);
+    
+    /**
+     * Launch an asynchronously initial computation for the given
+     * {@code updaterName} on {@code path}.
+     */
+    void launchInitialStatisticsComputation(String updaterName, String repositoryName, String path);
+
+    /**
+     * Compute the initial statistics for the given @{code updaterName} on
+     * {@code path}
+     */
+    void computeInitialStatistics(String updaterName, CoreSession session, QuotaStatsInitialWork currentWorker,
+                String path);
 
     /**
      * Returns the progress status of {@code updaterName}.

@@ -105,7 +105,47 @@ public class QuotaSyncListenerChecker extends AbstractQuotaStatsUpdater {
             res.close();
         }
     }
+    
+    @Override
+    public void computeInitialStatistics(CoreSession unrestrictedSession, QuotaStatsInitialWork currentWorker,
+            String path) {
+        QuotaComputerProcessor processor = new QuotaComputerProcessor();
+        try {
+            String query = "SELECT ecm:uuid FROM Document where ecm:mixinType != 'HiddenInNavigation' and ecm:isCheckedInVersion=0 and ecm:isProxy=0 and ecm:mixinType != 'Collection'"
+                    + " and ecm:path startswith '" + path + "' order by dc:created desc";
 
+            IterableQueryResult res = unrestrictedSession.queryAndFetch(query, "NXQL");
+            log.debug("Starting initial Quota computation by path");
+            long total = res.size();
+            log.debug("Start Tenant iteration on " + total + " items");
+            try {
+                for (Map<String, Serializable> r : res) {
+                    String uuid = (String) r.get("ecm:uuid");
+                    // this will force an update if the plugin was installed and
+                    // then removed
+                    removeFacet(unrestrictedSession, uuid);
+                }
+            } finally {
+                res.close();
+            }
+            removeFacet(unrestrictedSession, unrestrictedSession.getRootDocument().getId());
+            unrestrictedSession.save();
+            try {
+                long idx = 0;
+                res = unrestrictedSession.queryAndFetch(query, "NXQL");
+                for (Map<String, Serializable> r : res) {
+                    String uuid = (String) r.get("ecm:uuid");
+                    computeSizeOnDocument(unrestrictedSession, uuid, processor);
+                    currentWorker.notifyProgress(++idx, total);
+                }
+            } finally {
+                res.close();
+            }
+        } catch (Exception e) {
+            log.error("Error during initial Quota Size computation by path", e);
+        }
+    }
+    
     private void removeFacet(CoreSession unrestrictedSession, String uuid) {
         DocumentModel target = unrestrictedSession.getDocument(new IdRef(uuid));
         if (target.hasFacet(QuotaAwareDocument.DOCUMENTS_SIZE_STATISTICS_FACET)) {

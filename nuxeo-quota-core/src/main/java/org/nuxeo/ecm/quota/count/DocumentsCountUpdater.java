@@ -198,6 +198,11 @@ public class DocumentsCountUpdater extends AbstractQuotaStatsUpdater {
         Map<String, Count> documentsCountByFolder = computeDocumentsCountByFolder(session, folders);
         saveDocumentsCount(session, documentsCountByFolder);
     }
+    
+    @Override
+	public void computeInitialStatistics(CoreSession session, QuotaStatsInitialWork currentWorker, String path) {
+		// do nothing
+	}
 
     protected Map<String, String> getFolders(CoreSession session) {
         IterableQueryResult res = session.queryAndFetch(
@@ -328,7 +333,7 @@ public class DocumentsCountUpdater extends AbstractQuotaStatsUpdater {
 
     @Override
     protected void processDocumentBeforeRestore(CoreSession session, DocumentModel doc, DocumentEventContext docCtx)
-            {
+    {
         // do nothing
     }
 }
