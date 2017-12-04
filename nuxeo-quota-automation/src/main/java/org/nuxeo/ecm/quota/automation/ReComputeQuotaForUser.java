@@ -22,7 +22,7 @@ public class ReComputeQuotaForUser {
     @Context
     QuotaStatsService quotaStatsService;
 
-    @Param(name = "userName", required = false)
+    @Param(name = "userName", required = true)
     protected String userName;
 
     @OperationMethod

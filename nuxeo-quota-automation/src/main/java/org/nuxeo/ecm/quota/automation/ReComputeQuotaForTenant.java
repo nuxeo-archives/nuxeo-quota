@@ -24,7 +24,7 @@ public class ReComputeQuotaForTenant {
     @Context
     protected CoreSession session;
     
-    @Param(name = "tenantId", required = false)
+    @Param(name = "tenantId", required = true)
     protected String tenantId;
 
     @Context
