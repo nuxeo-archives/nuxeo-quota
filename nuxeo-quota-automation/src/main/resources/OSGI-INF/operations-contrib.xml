@@ -10,6 +10,12 @@
     <operation
       class="org.nuxeo.ecm.quota.automation.GetQuotaStatisticsOperation" />
 
+	<operation
+      class="org.nuxeo.ecm.quota.automation.ReComputeQuotaForUser" />
+
+	<operation
+      class="org.nuxeo.ecm.quota.automation.ReComputeQuotaForTenant" />
+
   </extension>
 
 </component>

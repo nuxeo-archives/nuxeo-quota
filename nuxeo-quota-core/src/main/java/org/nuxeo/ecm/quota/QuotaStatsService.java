@@ -92,4 +92,15 @@ public interface QuotaStatsService {
      */
     public long getQuotaSetOnUserWorkspaces(CoreSession session);
 
+    /**
+     * Launch an asynchronously initial computation for the given {@code updaterName} on {@code repositoryName}
+     * for {@code docPath}.
+     */
+    void launchInitialStatisticsComputation(String updaterName, String repositoryName, String docPath);
+
+    /**
+     * Compute the initial statistics for the given @{code updaterName} for {@code docPath}.
+     */
+    void computeInitialStatistics(String updaterName, CoreSession session, QuotaStatsInitialWork currentWorker, String docPath);
+
 }

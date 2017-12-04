@@ -118,14 +118,14 @@ public class QuotaStatsServiceImpl extends DefaultComponent implements QuotaStat
         if (workManager == null) {
             throw new RuntimeException("No WorkManager available");
         }
-        Work work = new QuotaStatsInitialWork(updaterName, repositoryName);
+        Work work = new QuotaStatsInitialWork(updaterName, repositoryName, null);
         workManager.schedule(work, Scheduling.IF_NOT_RUNNING_OR_SCHEDULED, true);
     }
 
     @Override
     public String getProgressStatus(String updaterName, String repositoryName) {
         WorkManager workManager = Framework.getLocalService(WorkManager.class);
-        Work work = new QuotaStatsInitialWork(updaterName, repositoryName);
+        Work work = new QuotaStatsInitialWork(updaterName, repositoryName, null);
         State state = workManager.getWorkState(work.getId());
         if (state == null) {
             return null;
@@ -412,4 +412,23 @@ public class QuotaStatsServiceImpl extends DefaultComponent implements QuotaStat
             return true;
         }
     }
+
+	@Override
+	public void launchInitialStatisticsComputation(String updaterName, String repositoryName, String docPath) {
+		WorkManager workManager = Framework.getLocalService(WorkManager.class);
+        if (workManager == null) {
+            throw new RuntimeException("No WorkManager available");
+        }
+        Work work = new QuotaStatsInitialWork(updaterName, repositoryName, docPath);
+        workManager.schedule(work, Scheduling.IF_NOT_RUNNING_OR_SCHEDULED, true);
+	}
+
+	@Override
+	public void computeInitialStatistics(String updaterName, CoreSession session, QuotaStatsInitialWork currentWorker,
+			String docPath) {
+		QuotaStatsUpdater updater = quotaStatsUpdaterRegistry.getQuotaStatsUpdater(updaterName);
+        if (updater != null) {
+            updater.computeInitialStatistics(session, currentWorker, docPath);
+        }
+	}
 }

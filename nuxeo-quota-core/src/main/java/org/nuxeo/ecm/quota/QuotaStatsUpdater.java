@@ -61,4 +61,12 @@ public interface QuotaStatsUpdater {
 
     public String getDescriptionLabel();
 
+    /**
+     * Compute the initial statistics for the given user or tenant for this {@code QuotaStatsUpdater}.
+     *
+     * @param session an unrestricted {@link CoreSession} to be used
+     * @param docPath is used to recompute the quota for particular path (tenant/user)
+     */
+    void computeInitialStatistics(CoreSession session, final QuotaStatsInitialWork currentWorker, String docPath);
+
 }

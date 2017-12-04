@@ -35,8 +35,13 @@ import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.IdRef;
 import org.nuxeo.ecm.core.api.IterableQueryResult;
+import org.nuxeo.ecm.core.api.VersioningOption;
 import org.nuxeo.ecm.core.event.Event;
 import org.nuxeo.ecm.core.utils.BlobsExtractor;
+import org.nuxeo.ecm.core.versioning.VersioningService;
+import org.nuxeo.ecm.platform.audit.service.NXAuditEventsService;
+import org.nuxeo.ecm.platform.dublincore.listener.DublinCoreListener;
+import org.nuxeo.ecm.platform.ec.notification.NotificationConstants;
 import org.nuxeo.ecm.quota.AbstractQuotaStatsUpdater;
 import org.nuxeo.ecm.quota.QuotaStatsInitialWork;
 import org.nuxeo.runtime.api.Framework;
@@ -408,6 +413,77 @@ public class DocumentsSizeUpdater extends AbstractQuotaStatsUpdater {
             long deltaTrash, long deltaVersions) {
         updateDocument(doc, deltaInner, deltaTotal, deltaTrash, deltaVersions);
         updateAncestors(session, doc, deltaTotal, deltaTrash, deltaVersions);
+    }
+
+	@Override
+	public void computeInitialStatistics(CoreSession session, QuotaStatsInitialWork currentWorker, String docPath) {
+		log.debug("Starting initial Quota computation for User/Tenant");
+		String query = "SELECT ecm:uuid FROM Document where ecm:mixinType != 'HiddenInNavigation'"+
+				" and ecm:isCheckedInVersion=0 and ecm:isProxy=0 and ecm:mixinType != 'Collection'"+
+				" and ecm:path startswith '" + docPath + "' order by dc:created desc";
+
+		// reset on all documents
+		// this will force an update if the quota addon was installed and then removed
+		long count = 0;
+		IterableQueryResult res = session.queryAndFetch(query, "NXQL");
+		try {
+			count = res.size();
+			log.debug("Start iteration on " + count + " items");
+			for (Map<String, Serializable> r : res) {
+				String uuid = (String) r.get("ecm:uuid");
+				resetInfo(session, uuid);
+			}
+		} finally {
+			res.close();
+		}
+		resetInfo(session, session.getRootDocument().getId());
+		session.save();
+
+		// recompute quota on each doc
+		res = session.queryAndFetch(query, "NXQL");
+		try {
+			long idx = 0;
+			for (Map<String, Serializable> r : res) {
+				String uuid = (String) r.get("ecm:uuid");
+				DocumentModel doc = session.getDocument(new IdRef(uuid));
+				if (log.isTraceEnabled()) {
+					log.trace("process Quota initial computation on uuid " + doc.getId());
+					log.trace("doc with uuid " + doc.getId() + " started update");
+				}
+				initDocument(session, doc);
+				if (log.isTraceEnabled()) {
+					log.trace("doc with uuid " + doc.getId() + " update completed");
+				}
+				currentWorker.notifyProgress(++idx, count);
+			}
+		} finally {
+			res.close();
+		}
+	}
+
+	protected void resetInfo(CoreSession unrestrictedSession, String uuid) {
+        DocumentModel target = unrestrictedSession.getDocument(new IdRef(uuid));
+        if (target.hasFacet(QuotaAwareDocument.DOCUMENTS_SIZE_STATISTICS_FACET)) {
+            if (log.isTraceEnabled()) {
+                log.trace("doc with uuid " + uuid + " already up to date");
+            }
+            QuotaAware quotaDoc = target.getAdapter(QuotaAware.class);
+            // Keep maxSize
+            long maxSize = quotaDoc.getMaxQuota();
+            quotaDoc.resetInfos();
+            quotaDoc.setMaxQuota(maxSize, true);
+            if (log.isDebugEnabled()) {
+                log.debug(target.getPathAsString() + " reset to " + quotaDoc.getQuotaInfo());
+            }
+
+            target.putContextData(NXAuditEventsService.DISABLE_AUDIT_LOGGER, true);
+            target.putContextData(DublinCoreListener.DISABLE_DUBLINCORE_LISTENER, true);
+            target.putContextData(NotificationConstants.DISABLE_NOTIFICATION_SERVICE, true);
+            target.putContextData(VersioningService.DISABLE_AUTO_CHECKOUT, Boolean.TRUE);
+            // force no versioning after quota modifications
+            target.putContextData(VersioningService.VERSIONING_OPTION, VersioningOption.NONE);
+            target = unrestrictedSession.saveDocument(target);
+        }
     }
 
 }

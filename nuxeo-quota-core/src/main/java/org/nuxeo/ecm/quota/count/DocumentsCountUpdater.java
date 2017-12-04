@@ -320,4 +320,9 @@ public class DocumentsCountUpdater extends AbstractQuotaStatsUpdater {
     protected void processDocumentBeforeRestore(CoreSession session, DocumentModel doc) {
         // do nothing
     }
+
+	@Override
+	public void computeInitialStatistics(CoreSession session, QuotaStatsInitialWork currentWorker, String docPath) {
+		// Not Implemented
+	}
 }
