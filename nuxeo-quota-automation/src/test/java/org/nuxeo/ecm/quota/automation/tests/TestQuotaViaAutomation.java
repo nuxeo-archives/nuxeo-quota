@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2006-2011 Nuxeo SA (http://nuxeo.com/) and others.
+ * (C) Copyright 2006-2018 Nuxeo (http://nuxeo.com/) and others.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import org.nuxeo.ecm.quota.size.QuotaAwareDocumentFactory;
 import org.nuxeo.runtime.test.runner.Deploy;
 import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
-import org.nuxeo.runtime.test.runner.RuntimeHarness;
 import org.nuxeo.runtime.transaction.TransactionHelper;
 
 /**
@@ -77,9 +76,6 @@ public class TestQuotaViaAutomation {
 
     @Inject
     protected FeaturesRunner featureRunner;
-
-    @Inject
-    protected RuntimeHarness harness;
 
     protected DocumentRef wsRef;
 
